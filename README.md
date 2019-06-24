@@ -6,4 +6,3 @@ Its a simple html graph which implements K-Nearest Neighbour algorithm
 
 
 
-
