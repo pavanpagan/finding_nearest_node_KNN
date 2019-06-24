@@ -6,6 +6,6 @@ Its a simple html graph which implements K-Nearest Neighbour algorithm
 
 
 <div align="center">
-    <img src="file://home/pavan/Pictures/ss.png" width="400px"</img> 
+    <img src="file:///home/pavan/Pictures/ss.png" width="400px"</img> 
 </div>
 
