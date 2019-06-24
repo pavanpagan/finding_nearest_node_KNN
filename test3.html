@@ -1,0 +1,144 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: monospace;
+        border:1px solid gray;
+        background: gray;
+      }
+      
+      .k {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+      }
+      
+      .k span {
+        position: relative;
+        bottom: 7px;
+        padding: 0 10px;
+      }
+      
+    </style>
+  </head>
+  <body>
+     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+     <script src="k-nearest.js"></script>
+     <script>
+       var width = 900,
+           height =550,
+           k = 2;
+       
+       var kDiv = d3.select(".k")
+        .on("change", function() {
+          k = +kDiv.select("input").node().value;
+          d3.select(this).select("span").text("K = " + k);
+          findNearest.k(k);
+        });
+       
+       var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+      
+       svg.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .style("fill-opacity", 0)
+        .on("mousemove", mousemove)
+        .on("wheel", function() {
+          var wheelUp = event.deltaY < 0;
+          wheelUp ? k++ : k--;
+          k = clamp(k, 1, 100); 
+          kDiv.select("input").node().value = k;
+          kDiv.select("span").text("K = " + k);
+          findNearest.k(k);
+          mousemove.call(this);
+        });
+      
+        //To generate points randomly
+      var data = d3.range(100)
+        .map(function(d) {
+          return {
+            x: Math.round(d3.random.normal(width/4, width/8)()),
+            y: Math.round(Math.random() * height)
+          };
+        });
+
+//example dataset
+        //  var data=[{"x":10,"y":60},
+        //         {"x":10,"y":99},
+        //         {"x":10,"y":138},
+        //         {"x":10,"y":177},
+        //         {"x":10,"y":216},
+        //         {"x":10,"y":255},
+        //         {"x":10,"y":294},
+        //         {"x":10,"y":333},
+        //         {"x":10,"y":372},
+        //         {"x":10,"y":411},
+        //         {"x":39,"y":138},
+        //         {"x":39,"y":177},
+        //         {"x":39,"y":216},
+        //         {"x":39,"y":255},
+        //         {"x":39,"y":294},
+        //         {"x":39,"y":333},
+        //         {"x":39,"y":372},{"x":39,"y":411},{"x":39,"y":450},{"x":39,"y":489},
+        //         {"x":68,"y":60},{"x":68,"y":99},{"x":68,"y":138},{"x":68,"y":177},{"x":68,"y":216},
+        //         {"x":68,"y":255},{"x":68,"y":372},{"x":68,"y":411},
+        //         {"x":68,"y":450},{"x":68,"y":489},{"x":97,"y":60},{"x":97,"y":99},{"x":97,"y":138},
+        //         {"x":97,"y":177},{"x":97,"y":216},{"x":97,"y":255},{"x":97,"y":294},{"x":97,"y":333},
+        //         {"x":97,"y":372},{"x":97,"y":411},{"x":97,"y":450},{"x":97,"y":489},{"x":126,"y":60},
+        //         {"x":126,"y":99},{"x":126,"y":138},{"x":126,"y":177},{"x":126,"y":216},{"x":126,"y":255},
+        //         {"x":126,"y":294},{"x":126,"y":333},{"x":126,"y":372},{"x":126,"y":411},{"x":126,"y":450},
+        //         {"x":126,"y":489},{"x":155,"y":60},{"x":155,"y":99},{"x":155,"y":138},{"x":155,"y":177},
+        //         {"x":155,"y":216},{"x":155,"y":255},{"x":155,"y":294},{"x":155,"y":333},{"x":155,"y":372}
+        //         ,{"x":155,"y":411},{"x":155,"y":450},{"x":155,"y":489},{"x":184,"y":60},{"x":184,"y":99}
+        //         ,{"x":184,"y":216},{"x":184,"y":255},{"x":184,"y":294}];
+
+      
+      var findNearest = d3.kNearestNeighbors()
+        .extent([[-1, -1], [width + 1, height + 1]])
+        .x(function(d) { return d.x; })
+        .y(function(d) { return d.y; })
+        .k(k)
+        .data(data);
+        
+      var hull = svg.append("path").attr("class", "hull");
+      
+      var circles = svg.append("g").attr("class", "circles")
+          .selectAll("circle").data(data)
+        .enter().append("circle")
+          .attr("cx", function(d) { return d.x; })
+          .attr("cy", function(d) { return d.y; })
+          .attr("r",5)
+          .style("opacity", 5);
+      
+      function mousemove() {
+        preventDefault(event);
+        
+        var nearest = findNearest(d3.mouse(this));
+        
+        hull.datum(d3.geom.hull(nearest))
+          .attr("d", function(d) { 
+            return d.length > 1 ? "M" + d.join("L") + "Z" : null; 
+          });
+       
+        nearest = nearest
+          .map(function(d) { return data[d.i]; });
+        
+        circles
+          .style("fill", function(d) {
+            return nearest.indexOf(d) !== -1 ? "#A2FF00" : null;
+          });
+      }
+      
+      function clamp(d, min, max) {
+        return d < min ? min : d > max ? max : d;
+      }
+      
+      function preventDefault(e) {
+        e = e || window.event;
+        if (e.preventDefault) e.preventDefault();
+        e.returnValue = false;  
+      }
+     </script>
+  </body>
